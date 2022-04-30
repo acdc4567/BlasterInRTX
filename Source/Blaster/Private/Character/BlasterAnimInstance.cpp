@@ -6,7 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Weapon/Weapon.h"
-
+#include "DrawDebugHelpers.h"
 
 
 
@@ -42,6 +42,11 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 
 	TurninInPlace = BlasterCharacter->GetTurningInPlace();
 
+	bRotateRootBone = BlasterCharacter->ShouldRotateRootBone();
+
+	bElimmed = BlasterCharacter->IsElimmed();
+
+
 	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(BlasterCharacter->GetVelocity());
 	FRotator DeltaRot = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation);
@@ -68,7 +73,17 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
 
-	
+		if (BlasterCharacter->IsLocallyControlled()) {
+			FTransform RighHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RighHandTransform.GetLocation(), RighHandTransform.GetLocation() + (RighHandTransform.GetLocation() - BlasterCharacter->GetHitTarget()));
+
+		}
+		
+		
+		
+
+
+		
 	}
 
 

@@ -18,6 +18,9 @@ public class Blaster : ModuleRules
 		,"Blaster/Public/HUD"
 		,"Blaster/Public/Weapon"
 		,"Blaster/Public/BlasterComponents"
+		,"Blaster/Public/PlayerController"
+		,"Blaster/Public/Interfaces"
+
 		});
 
 		// Uncomment if you are using Slate UI

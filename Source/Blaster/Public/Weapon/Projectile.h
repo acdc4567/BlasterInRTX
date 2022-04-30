@@ -23,6 +23,8 @@ protected:
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse,const FHitResult& Hit);
 	virtual void Destroyed() override;
 
+	UPROPERTY(EditAnywhere, Category = Health)
+		float Damage=10.f;
 
 
 private:
@@ -46,8 +48,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = VFX)
 		class USoundCue* ImpactSound;
 
-
-
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
