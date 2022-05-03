@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Weapon/WeaponTypes.h"
+
 #include "Weapon.generated.h"
 
 UENUM(BlueprintType)
@@ -32,8 +34,17 @@ public:
 	
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	virtual void OnRep_Owner() override;
+	void SetHUDAmmo();
 	virtual void Fire(const FVector & HitTarget);
 	
+	void Dropped();
+
+
+
+
+
 	//AutomaticFire
 
 	UPROPERTY(EditAnywhere, Category = Combat)
@@ -86,8 +97,25 @@ private:
 		float ZoomInterpSpeed = 20.f;
 
 
+	UPROPERTY(EditAnywhere, ReplicatedUsing= OnRep_Ammo,Category = Ammo)
+		int32 Ammo;
+
+	UFUNCTION()
+		void OnRep_Ammo();
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 MagCapacity;
+
+	void SpendRound();
 
 
+	UPROPERTY()
+		class ABlasterCharacter* BlasterOwnerCharacter;
+	UPROPERTY()
+		class ABlasterPlayerController* BlasterOwnerController;
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		EWeaponType WeaponType;
 
 public:	
 	void SetWeaponState(EWeaponState State);
@@ -115,6 +143,12 @@ public:
 
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+
+	bool IsEmpty();
+
+
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+
 
 
 };

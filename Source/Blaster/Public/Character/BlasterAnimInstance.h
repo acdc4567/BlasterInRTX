@@ -34,7 +34,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
 		bool bIsWeaponEquipped;
 	
-	class AWeapon* EquippedWeapon;
+	UPROPERTY()
+		class AWeapon* EquippedWeapon;
 
 
 	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
@@ -74,6 +75,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
 		bool bElimmed;
 
+	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+		bool bUseFABRIK;
 
 
 };

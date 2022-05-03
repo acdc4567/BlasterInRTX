@@ -16,7 +16,12 @@
 #include "Blaster/Blaster.h"
 #include "PlayerController/BlasterPlayerController.h"
 #include "GameMode/BlastrGameMode.h"
-
+#include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "PlayerState/BlasterPlayerState.h"
+#include "Weapon/WeaponTypes.h"
 
 
 
@@ -24,6 +29,8 @@ ABlasterCharacter::ABlasterCharacter()
 {
 
 	PrimaryActorTick.bCanEverTick = true;
+
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>("CameraBoom");
 	CameraBoom->SetupAttachment(GetMesh());
@@ -60,12 +67,43 @@ ABlasterCharacter::ABlasterCharacter()
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
 
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>("DissolveTimelineComponent");
 
 
 
 }
 
+void ABlasterCharacter::BeginPlay() {
+	Super::BeginPlay();
 
+	Health = MaxHealth;
+	UpdateHUDHealth();
+
+
+	if (HasAuthority()) {
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
+	}
+
+}
+
+
+void ABlasterCharacter::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled()) {
+		AimOffset(DeltaTime);
+	}
+	else {
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > .25f) {
+			OnRep_ReplicatedMovement();
+		}
+		CalculateAO_Pitch();
+	}
+
+	HideCameraIfCameraClose();
+	PollInit();
+}
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 
@@ -128,6 +166,40 @@ void ABlasterCharacter::PlayElimMontage() {
 
 }
 
+void ABlasterCharacter::PlayReloadMontage() {
+
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage) {
+		FName SectionName;
+		switch (Combat->EquippedWeapon->GetWeaponType()) {
+		case EWeaponType::EWT_AssaultRifle:
+
+			SectionName = FName("Rifle");
+
+			break;
+		case EWeaponType::EWT_MAX:
+			break;
+		default:
+			break;
+		}
+
+
+
+		AnimInstance->Montage_Play(ReloadMontage);
+		AnimInstance->Montage_JumpToSection(SectionName);
+
+
+	}
+
+
+
+
+
+
+
+}
+
 void ABlasterCharacter::PlayHitReactMontage() {
 
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
@@ -169,6 +241,26 @@ void ABlasterCharacter::UpdateHUDHealth() {
 	}
 }
 
+void ABlasterCharacter::PollInit() {
+
+	if (BlasterPlayerState == nullptr) {
+		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+		if (BlasterPlayerState) {
+			BlasterPlayerState->AddToScore(0.f);
+			BlasterPlayerState->AddToDefeats(0);
+
+
+
+
+		}
+		
+
+
+	}
+
+
+}
+
 
 void ABlasterCharacter::OnRep_ReplicatedMovement() {
 
@@ -184,46 +276,106 @@ void ABlasterCharacter::OnRep_ReplicatedMovement() {
 
 }
 
-void ABlasterCharacter::Elim_Implementation() {
+void ABlasterCharacter::Elim() {
+
+	if (Combat && Combat->EquippedWeapon) {
+		Combat->EquippedWeapon->Dropped();
+	}
+
+
+	MulticastElim();
+	GetWorldTimerManager().SetTimer(ElimTimer,this,&ABlasterCharacter::ElimTimerFinished,ElimDelay);
+
+	
+
+
+
+}
+
+void ABlasterCharacter::Destroyed() {
+	Super::Destroyed();
+
+	if (ElimBotComponent) {
+		ElimBotComponent->DestroyComponent();
+	}
+
+
+
+}
+
+void ABlasterCharacter::MulticastElim_Implementation() {
+	
+	
+	if (BlasterPlayerController)BlasterPlayerController->SetHUDWeaponAmmo(0);
+	
+	
 	bElimmed = 1;
 	PlayElimMontage();
 
+	//StartDissolveEffect
+
+	if (DissolveMaterialInstance) {
+		DynamicMaterialDissolveInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicMaterialDissolveInstance);
+
+		DynamicMaterialDissolveInstance->SetScalarParameterValue(TEXT("Dissolve"), .0f);
+		DynamicMaterialDissolveInstance->SetScalarParameterValue(TEXT("Glow"), 100.0f);
+
+
+
+	}
+	StartDissolve();
+
+	//DisableCharacterMovement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (BlasterPlayerController) {
+		DisableInput(BlasterPlayerController);
+	}
+	//DisableCollision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+
+	//SpawnElimBot
+
+	if (ElimBotEffect) {
+		FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ElimBotEffect, ElimBotSpawnPoint, GetActorRotation());
+
+	}
+
+	if (ElimBotSound) {
+		UGameplayStatics::SpawnSoundAtLocation(this, ElimBotSound, GetActorLocation());
+	}
 
 
 }
 
-void ABlasterCharacter::BeginPlay()
-{
-	Super::BeginPlay();
 
-	Health = MaxHealth;
-	UpdateHUDHealth();
+void ABlasterCharacter::ElimTimerFinished() {
+	
 
 
-	if (HasAuthority()) {
-		OnTakeAnyDamage.AddDynamic(this,&ABlasterCharacter::ReceiveDamage);
-	}
 
-}
-
-
-void ABlasterCharacter::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime);
-
-	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy&&IsLocallyControlled()) {
-		AimOffset(DeltaTime);
-	}
-	else {
-		TimeSinceLastMovementReplication += DeltaTime;
-		if (TimeSinceLastMovementReplication > .25f) {
-			OnRep_ReplicatedMovement();
-		}
-		CalculateAO_Pitch();
+	ABlastrGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlastrGameMode>();
+	if (BlasterGameMode) {
+	
+		BlasterGameMode->RequestRespawn(this,Controller);
+	
 	}
 	
-	HideCameraIfCameraClose();
+
+
+
+
+
+
+
 
 }
+
+
 
 
 
@@ -252,6 +404,9 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ABlasterCharacter::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ABlasterCharacter::FireButtonReleased);
+
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ABlasterCharacter::ReloadButtonPressed);
+
 
 
 
@@ -402,6 +557,8 @@ void ABlasterCharacter::OnRep_Health() {
 
 }
 
+
+
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
 	if (OverlappingWeapon) {
 		OverlappingWeapon->ShowPickupWidget(0);
@@ -445,6 +602,34 @@ FVector ABlasterCharacter::GetHitTarget() const {
 	return Combat->HitTarget;
 }
 
+void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue) {
+
+	if (DynamicMaterialDissolveInstance) {
+		DynamicMaterialDissolveInstance->SetScalarParameterValue(TEXT("Dissolve"), DissolveValue);
+	}
+
+
+
+}
+
+void ABlasterCharacter::StartDissolve() {
+
+	DissolveTrack.BindDynamic(this, &ABlasterCharacter::UpdateDissolveMaterial);
+	if (DissolveCurve&&DissolveTimeline) {
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->Play();
+	}
+
+
+}
+
+ECombatState ABlasterCharacter::GetCombatState() const {
+
+
+	if (Combat == nullptr)return ECombatState::ECS_MAX;
+	return Combat->CombatState;
+}
+
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) {
 
@@ -475,6 +660,22 @@ void ABlasterCharacter::CrouchButtonPressed() {
 void ABlasterCharacter::CrouchButtonReleased() {
 
 	UnCrouch();
+}
+
+void ABlasterCharacter::ReloadButtonPressed() {
+
+	if (Combat) {
+		Combat->Reload();
+	}
+
+
+
+
+
+
+
+
+
 }
 
 void ABlasterCharacter::AimButtonPressed() {

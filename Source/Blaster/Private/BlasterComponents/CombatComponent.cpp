@@ -32,6 +32,8 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo,COND_OwnerOnly);
+	DOREPLIFETIME(UCombatComponent, CombatState);
 
 }
 
@@ -45,8 +47,15 @@ void UCombatComponent::BeginPlay()
 			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
 		}
+		if (Character->HasAuthority()) {
+			InitializeCarriedAmmo();
+		}
+
+
+
 	}
 	
+
 	
 }
 
@@ -86,7 +95,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed) {
 
 void UCombatComponent::Fire() {
 	
-	if (bCanFire) {
+	if (CanFire()) {
 		bCanFire = 0;
 		ServerFire(HitTarget);
 
@@ -121,17 +130,46 @@ void UCombatComponent::FireTimerFinished() {
 
 }
 
+bool UCombatComponent::CanFire() {
+	if(EquippedWeapon==nullptr) return false;
+
+	return !EquippedWeapon->IsEmpty()&&bCanFire&&CombatState==ECombatState::ECS_Unoccupied;
+
+
+
+
+}
+
+void UCombatComponent::OnRep_CarriedAmmo() {
+
+	BlasterController = BlasterController == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : BlasterController;
+	if (BlasterController) {
+		BlasterController->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+}
+
+void UCombatComponent::InitializeCarriedAmmo() {
+
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
+
+}
+
+
+
+
+
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget) {
 
 	MulticastFire(TraceHitTarget);
-
+	
 }
 
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget) {
 
 	if (EquippedWeapon == nullptr)return;
-	if (Character) {
+	if (Character&& CombatState == ECombatState::ECS_Unoccupied) {
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 	}
@@ -146,6 +184,13 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 
 	if (Character == nullptr||WeaponToEquip==nullptr)return;
 
+	if (EquippedWeapon) {
+		EquippedWeapon->Dropped();
+	}
+
+
+
+
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	const USkeletalMeshSocket* HandSocket= Character->GetMesh()->GetSocketByName(TEXT("RightHandSocket"));
@@ -155,14 +200,99 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	
 	}
 	EquippedWeapon->SetOwner(Character);
+	EquippedWeapon->SetHUDAmmo();
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+
+	}
+
+
+	BlasterController = BlasterController == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : BlasterController;
+	if (BlasterController) {
+		BlasterController->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+
+
 	Character->GetCharacterMovement()->bOrientRotationToMovement = 0;
 	Character->bUseControllerRotationYaw = 1;
 
 
 }
 
+void UCombatComponent::Reload() {
+
+	if (CarriedAmmo > 0&&CombatState!=ECombatState::ECS_Reloading) {
+		ServerReload();
+	}
+
+	
+}
+
+
+
+void UCombatComponent::ServerReload_Implementation() {
+
+	if (Character == nullptr)return;
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+
+
+}
+
+void UCombatComponent::FinishReloading() {
+	if (Character == nullptr)return;
+	if (Character->HasAuthority()) {
+		CombatState = ECombatState::ECS_Unoccupied;
+
+	}
+	if (bFireButtonPressed) {
+		Fire();
+	}
+
+
+}
+
+void UCombatComponent::OnRep_CombatState() {
+
+	switch (CombatState) {
+	case ECombatState::ECS_Unoccupied:
+		if (bFireButtonPressed) { Fire(); }
+
+		break;
+	case ECombatState::ECS_Reloading:
+		HandleReload();
+		break;
+	case ECombatState::ECS_MAX:
+		break;
+	default:
+		break;
+	}
+
+
+
+
+}
+void UCombatComponent::HandleReload() {
+
+	
+	Character->PlayReloadMontage();
+
+
+
+}
+
 void UCombatComponent::OnRep_EquippedWeapon() {
 	if (EquippedWeapon && Character) {
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(TEXT("RightHandSocket"));
+		if (HandSocket) {
+			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+
+
+		}
+
 		Character->GetCharacterMovement()->bOrientRotationToMovement = 0;
 		Character->bUseControllerRotationYaw = 1;
 	}
@@ -275,6 +405,10 @@ void UCombatComponent::SetHUDPackage(float DeltaTime) {
 
 
 }
+
+
+
+
 
 void UCombatComponent::InterpFOV(float DeltaTime) {
 

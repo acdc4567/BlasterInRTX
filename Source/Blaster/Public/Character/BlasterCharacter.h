@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Interfaces/InteractWithCrosshairsInterface.h"
+#include "Components/TimelineComponent.h"
+#include "Blaster/BlasterTypes/CombatState.h"
+
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -31,12 +34,15 @@ public:
 
 	void PlayElimMontage();
 	
+	void PlayReloadMontage();
+
 
 	virtual void OnRep_ReplicatedMovement() override;
-
-	UFUNCTION(NetMulticast,Reliable)
 	void Elim();
+	UFUNCTION(NetMulticast,Reliable)
+	void MulticastElim();
 
+	virtual void Destroyed() override;
 
 
 protected:
@@ -51,6 +57,7 @@ protected:
 	void EquipButtonPressed();
 	void CrouchButtonPressed();
 	void CrouchButtonReleased();
+	void ReloadButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
 
@@ -79,7 +86,8 @@ protected:
 
 	void UpdateHUDHealth();
 	
-
+	//Poll for any relevent Classes and Initialize the HUD
+	void PollInit();
 
 
 
@@ -100,7 +108,7 @@ private:
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		class UCombatComponent* Combat;
 
 	UFUNCTION(Server,Reliable)
@@ -126,6 +134,10 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* FireWeaponMontagex1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* ReloadMontage;
+
 
 	void HideCameraIfCameraClose();
 
@@ -156,6 +168,53 @@ private:
 
 	bool bElimmed = 0;
 
+	FTimerHandle ElimTimer;
+
+	void ElimTimerFinished();
+
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+		float ElimDelay = 5.f;
+
+	//DissolveEffect
+
+	UPROPERTY(VisibleAnywhere, Category = Dissolve)
+		UTimelineComponent* DissolveTimeline;
+
+
+	FOnTimelineFloat DissolveTrack;
+
+	UPROPERTY(EditAnywhere, Category = Dissolve)
+		UCurveFloat* DissolveCurve;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+
+	void StartDissolve();
+
+
+	UPROPERTY(VisibleAnywhere, Category = Dissolve)
+		UMaterialInstanceDynamic* DynamicMaterialDissolveInstance;
+
+
+	UPROPERTY(EditAnywhere, Category = Dissolve)
+		UMaterialInstance* DissolveMaterialInstance;
+
+
+	//ElimBot
+
+	UPROPERTY(EditAnywhere, Category = Dissolve)
+		UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere, Category = Dissolve)
+		UParticleSystemComponent* ElimBotComponent;
+
+	UPROPERTY(EditAnywhere, Category = Dissolve)
+		class USoundCue* ElimBotSound;
+
+	UPROPERTY()
+		class ABlasterPlayerState* BlasterPlayerState;
+
+
 
 public:	
 	
@@ -181,8 +240,10 @@ public:
 
 	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 
+	FORCEINLINE float GetHealth() const { return Health; }
 
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 
-
+	ECombatState GetCombatState() const;
 
 };

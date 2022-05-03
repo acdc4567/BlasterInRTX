@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "HUD/BlasterHUD.h"
+#include "Weapon/WeaponTypes.h"
+#include "Blaster/BlasterTypes/CombatState.h"
+
 #include "CombatComponent.generated.h"
 
 
@@ -22,6 +25,10 @@ public:
 	friend class ABlasterCharacter;
 
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+
+	void Reload();
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -55,11 +62,20 @@ protected:
 	void SetHUDPackage(float DeltaTime);
 
 
+	UFUNCTION(Server, Reliable)
+		void ServerReload();
+
+
+	void HandleReload();
+
 private:
 
-	class ABlasterCharacter* Character;
-	class ABlasterPlayerController* BlasterController;
-	class ABlasterHUD* HUD;
+	UPROPERTY()
+		class ABlasterCharacter* Character;
+	UPROPERTY()
+		class ABlasterPlayerController* BlasterController;
+	UPROPERTY()
+		class ABlasterHUD* HUD;
 
 
 
@@ -105,12 +121,35 @@ private:
 	FTimerHandle FireTimer;
 	
 	
-bool bCanFire=1;
+        bool bCanFire=1;
 	void StartFireTimer();
 	void FireTimerFinished();
 
+	bool CanFire();
+	
+
+	//CarriedAmmoForTheCurrentlyEquippedWeapon
+	UPROPERTY(ReplicatedUsing=OnRep_CarriedAmmo)
+		int32 CarriedAmmo;
+
+	UFUNCTION()
+		void OnRep_CarriedAmmo();
 
 
+	TMap<EWeaponType, int32>CarriedAmmoMap;
+
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 StartingARAmmo = 30;
+
+	void InitializeCarriedAmmo();
+
+
+	UPROPERTY(ReplicatedUsing= OnRep_CombatState)
+		ECombatState CombatState=ECombatState::ECS_Unoccupied;
+
+	UFUNCTION()
+		void OnRep_CombatState();
 
 public:	
 

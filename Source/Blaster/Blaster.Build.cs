@@ -20,7 +20,7 @@ public class Blaster : ModuleRules
 		,"Blaster/Public/BlasterComponents"
 		,"Blaster/Public/PlayerController"
 		,"Blaster/Public/Interfaces"
-
+		,"Blaster/Public/PlayerState"
 		});
 
 		// Uncomment if you are using Slate UI
