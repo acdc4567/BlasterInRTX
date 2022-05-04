@@ -41,7 +41,7 @@ public:
 	
 	void Dropped();
 
-
+	void AddAmmo(int32 AmmoToAdd);
 
 
 
@@ -52,6 +52,15 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 		float FireDelay = 0.15f;
+
+	UPROPERTY(EditAnywhere)
+		class USoundCue* EquipSound;
+
+
+
+
+
+
 
 
 protected:
@@ -117,6 +126,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = Ammo)
 		EWeaponType WeaponType;
 
+
+
+
+
 public:	
 	void SetWeaponState(EWeaponState State);
 
@@ -149,6 +162,10 @@ public:
 
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 
+
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 
 
 };
