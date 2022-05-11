@@ -394,6 +394,9 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) {
 		FVector End = Start + CrosshairWorldDirection * 80000.f;
 		GetWorld()->LineTraceSingleByChannel(TraceHitResult, Start, End, ECollisionChannel::ECC_Visibility);
 	
+		if (!TraceHitResult.bBlockingHit) {
+			TraceHitResult.ImpactPoint = End;
+		}
 		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>()) {
 			HUDPackage.CrosshairsColor = FLinearColor::Red;
 

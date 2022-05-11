@@ -11,6 +11,64 @@
 
 
 
+ABlastrGameMode::ABlastrGameMode() {
+
+	bDelayedStart = 1;
+
+
+}
+
+void ABlastrGameMode::BeginPlay() {
+
+	Super::BeginPlay();
+	LevelStartingTime = GetWorld()->GetTimeSeconds();
+
+
+
+
+}
+
+
+
+void ABlastrGameMode::Tick(float DeltaTime) {
+
+	Super::Tick(DeltaTime);
+	if (MatchState == MatchState::WaitingToStart) {
+		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds()+LevelStartingTime;
+	
+		if (CountdownTime <= 0.f) {
+			StartMatch();
+
+
+		}
+	
+	}
+
+
+
+}
+
+
+void ABlastrGameMode::OnMatchStateSet() {
+	Super::OnMatchStateSet();
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) {
+		ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*It);
+	
+		if (BlasterPlayer) {
+			BlasterPlayer->OnMatchStateSet(MatchState);
+		
+		}
+	
+
+
+	}
+
+
+
+
+}
+
 void ABlastrGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController) {
 
 
@@ -34,6 +92,8 @@ void ABlastrGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, A
 
 }
 
+
+
 void ABlastrGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController) {
 
 
@@ -56,3 +116,5 @@ void ABlastrGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* 
 
 
 }
+
+
