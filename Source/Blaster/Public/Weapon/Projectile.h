@@ -26,6 +26,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Health)
 		float Damage=10.f;
 
+	UPROPERTY(VisibleAnywhere, Category = Components)
+		class UProjectileMovementComponent* ProjectileMovementComponent;
 
 private:
 
@@ -33,9 +35,7 @@ private:
 		class UBoxComponent* CollisionBox;
 
 
-	UPROPERTY(VisibleAnywhere, Category = Components)
-		class UProjectileMovementComponent* ProjectileMovementComponent;
-
+	
 	UPROPERTY(EditAnywhere, Category = VFX)
 		class UParticleSystem* Tracer;
 

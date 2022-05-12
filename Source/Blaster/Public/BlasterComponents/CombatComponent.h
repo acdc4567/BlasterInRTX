@@ -31,6 +31,12 @@ public:
 	void FinishReloading();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	
+	void FireButtonPressed(bool bPressed);
+
+
+
 
 
 protected:
@@ -46,8 +52,7 @@ protected:
 	void OnRep_EquippedWeapon();
 
 
-	void FireButtonPressed(bool bPressed);
-
+	
 	void Fire();
 
 	UFUNCTION(Server,Reliable)
@@ -147,7 +152,18 @@ private:
 
 
 	UPROPERTY(EditAnywhere, Category = Ammo)
-		int32 StartingARAmmo = 30;
+		int32 StartingARAmmo = 130;
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 StartingRocketAmmo = 10;
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 StartingPistolAmmo = 50;
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 StartingShotgunAmmo = 15;
+
+
 
 	void InitializeCarriedAmmo();
 

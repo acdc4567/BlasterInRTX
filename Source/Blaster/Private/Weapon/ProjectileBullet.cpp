@@ -4,6 +4,17 @@
 #include "Weapon/ProjectileBullet.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+
+AProjectileBullet::AProjectileBullet() {
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
+	ProjectileMovementComponent->bRotationFollowsVelocity = 1;
+	ProjectileMovementComponent->SetIsReplicated(1);
+	ProjectileMovementComponent->InitialSpeed = 12000.f;
+	ProjectileMovementComponent->MaxSpeed = 12000.f;
+	ProjectileMovementComponent->ProjectileGravityScale = .02f;
+}
+
 
 
 

@@ -3,7 +3,6 @@
 
 #include "Weapon/Projectile.h"
 #include "Components/BoxComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Particles/ParticleSystem.h"
@@ -28,9 +27,7 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
 
 
-	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
-	ProjectileMovementComponent->bRotationFollowsVelocity = 1;
-
+	
 
 
 
