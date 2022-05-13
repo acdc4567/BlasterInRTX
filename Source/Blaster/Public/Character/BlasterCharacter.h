@@ -46,6 +46,10 @@ public:
 	UPROPERTY(Replicated)
 	bool bDisableGameplay=0;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
+
+
 
 
 

@@ -163,6 +163,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = Ammo)
 		int32 StartingShotgunAmmo = 15;
 
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 StartingSniperAmmo = 15;
+	
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 StartingGrenadeLauncherAmmo = 15;
 
 
 	void InitializeCarriedAmmo();

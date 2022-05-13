@@ -24,19 +24,21 @@ protected:
 
 	void WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
 
-
-private:
-	UPROPERTY(EditAnywhere,Category=HitScan)
-	float Damage = 10.f;
-
-
 	UPROPERTY(EditAnywhere, Category = HitScan)
 		class UParticleSystem* ImpactParticles;
-
-
 	UPROPERTY(EditAnywhere, Category = HitScan)
 		UParticleSystem* BeamParticles;
+	UPROPERTY(EditAnywhere, Category = HitScan)
+		class USoundCue* hitsound;
+	UPROPERTY(EditAnywhere, Category = HitScan)
+		float Damage = 10.f;
 
+private:
+	
+
+	
+
+	
 
 	//TraceEndWithScatter
 

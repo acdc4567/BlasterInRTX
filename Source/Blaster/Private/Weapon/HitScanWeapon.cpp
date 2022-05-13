@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Weapon/WeaponTypes.h"
+#include "Sound/SoundCue.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget) {
 
@@ -96,7 +97,7 @@ FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVe
 	//DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Green, 1);
 	//DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Red, 1);
 	
-	DrawDebugLine(GetWorld(), TraceStart, FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()), FColor::Cyan, 1);
+	//DrawDebugLine(GetWorld(), TraceStart, FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()), FColor::Cyan, 1);
 	
 	
 	return  FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
