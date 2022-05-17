@@ -50,7 +50,7 @@ ABlasterCharacter::ABlasterCharacter()
 
 
 	Combat = CreateDefaultSubobject<UCombatComponent>("CombatComponent");
-	Combat->SetIsReplicated(1);
+	Combat->SetIsReplicated(true);
 
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = 1;
@@ -59,7 +59,7 @@ ABlasterCharacter::ABlasterCharacter()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
-	GetCharacterMovement()->RotationRate = FRotator(0.f,0.f,850.f) ;
+	GetCharacterMovement()->RotationRate = FRotator(0.f,0.f,854.f) ;
 
 
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
@@ -99,7 +99,7 @@ void ABlasterCharacter::Tick(float DeltaTime) {
 
 void ABlasterCharacter::RotateInPlace(float DeltaTime) {
 	if (bDisableGameplay) {
-		bUseControllerRotationYaw = 0;
+		bUseControllerRotationYaw = false;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 		return;
 		
@@ -443,7 +443,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	check(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jumpx", IE_Pressed, this, &ABlasterCharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ABlasterCharacter::Jump);
 
 
 

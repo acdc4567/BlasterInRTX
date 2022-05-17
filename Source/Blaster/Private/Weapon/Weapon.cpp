@@ -31,6 +31,10 @@ AWeapon::AWeapon()
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	WeaponMesh->SetCustomDepthStencilValue( CUSTOM_DEPTH_BLUE);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(1);
+
 	AreaSphere = CreateDefaultSubobject<USphereComponent>("AreaSphere");
 	AreaSphere->SetupAttachment(RootComponent);
 	AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -48,6 +52,15 @@ AWeapon::AWeapon()
 
 
 
+
+void AWeapon::EnableCustomDepth(bool bEnable) {
+
+	if (WeaponMesh) {
+		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
+
+
+}
 
 void AWeapon::BeginPlay()
 {
@@ -263,7 +276,7 @@ void AWeapon::SetWeaponState(EWeaponState State) {
 		WeaponMesh->SetSimulatePhysics(0);
 		WeaponMesh->SetEnableGravity(0);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+		EnableCustomDepth(0);
 		break;
 	case EWeaponState::EWS_Dropped:
 
@@ -275,7 +288,9 @@ void AWeapon::SetWeaponState(EWeaponState State) {
 		WeaponMesh->SetEnableGravity(1);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+		WeaponMesh->MarkRenderStateDirty();
+		EnableCustomDepth(1);
 
 
 		break;
@@ -307,14 +322,17 @@ void AWeapon::OnRep_WeaponState() {
 		WeaponMesh->SetSimulatePhysics(0);
 		WeaponMesh->SetEnableGravity(0);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+		EnableCustomDepth(0);
 		break;
 	case EWeaponState::EWS_Dropped:
 
 		WeaponMesh->SetSimulatePhysics(1);
 		WeaponMesh->SetEnableGravity(1);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
+		
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+		WeaponMesh->MarkRenderStateDirty();
+		EnableCustomDepth(1);
 
 
 		break;

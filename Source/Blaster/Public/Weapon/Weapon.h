@@ -56,8 +56,9 @@ public:
 	UPROPERTY(EditAnywhere)
 		class USoundCue* EquipSound;
 
+	//enable or disable custom Depth
 
-
+	void EnableCustomDepth(bool bEnable);
 
 
 

@@ -36,7 +36,7 @@ public:
 	void FireButtonPressed(bool bPressed);
 
 
-
+	void PickupAmmo(EWeaponType WeaponType,int32 AmmoAmount);
 
 
 protected:
@@ -76,7 +76,7 @@ protected:
 	int32 AmountToReload();
 
 
-
+	void UpdateCarriedAmmo();
 
 
 
@@ -149,6 +149,10 @@ private:
 
 
 	TMap<EWeaponType, int32>CarriedAmmoMap;
+	
+	
+	UPROPERTY(EditAnywhere, Category = Ammo)
+		int32 MaxCarriedAmmo = 500;
 
 
 	UPROPERTY(EditAnywhere, Category = Ammo)
