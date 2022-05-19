@@ -37,6 +37,16 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime) {
 
 }
 
+void UBuffComponent::ReplenishShield(float ShieldAmount, float ReplenishTime) {
+
+	bReplenishingShield = 1;
+	ReplenishRate = ShieldAmount / ReplenishTime;
+	ShieldReplenishAmount += ShieldAmount;
+
+
+
+}
+
 void UBuffComponent::HealRampUp(float DeltaTime) {
 
 	if (!bHealing || Character == nullptr || Character->IsElimmed()) return;
@@ -53,11 +63,34 @@ void UBuffComponent::HealRampUp(float DeltaTime) {
 
 }
 
+void UBuffComponent::ShieldRampUp(float DeltaTime) {
+
+	if (!bReplenishingShield || Character == nullptr || Character->IsElimmed()) return;
+
+	const float HealThisFrame = ReplenishRate * DeltaTime;
+	Character->SetShield(FMath::Clamp(Character->GetShield() + HealThisFrame, 0.f, Character->GetMaxShield()));
+	Character->UpdateHUDShield();
+	ShieldReplenishAmount -= HealThisFrame;
+
+	if (ShieldReplenishAmount <= 0.f || Character->GetShield() >= Character->GetMaxShield()) {
+		bReplenishingShield = false;
+		ShieldReplenishAmount = 0.f;
+	}
+
+
+}
+
 void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed) {
 
 	InitialBaseSpeed = BaseSpeed;
 	InitialCrouchSpeed = CrouchSpeed;
 
+
+}
+
+void UBuffComponent::SetInitialJumpVelocity(float BaseVelocity) {
+
+	InitialJumpVelocity = BaseVelocity;
 
 }
 
@@ -69,6 +102,8 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	HealRampUp( DeltaTime);
+
+	ShieldRampUp(DeltaTime);
 }
 
 void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime) {
@@ -100,12 +135,50 @@ void UBuffComponent::ResetSpeeds() {
 
 }
 
+void UBuffComponent::BuffJump(float BuffJumpVelocity, float BuffTime) {
+
+	if (Character == nullptr)return;
+
+	Character->GetWorldTimerManager().SetTimer(JumpBuffTimer, this, &UBuffComponent::ResetJump, BuffTime);
+
+	if (Character->GetCharacterMovement()) {
+		Character->GetCharacterMovement()->JumpZVelocity = BuffJumpVelocity;
+	}
+	MulticastJumpBuff(BuffJumpVelocity);
+
+}
+
+void UBuffComponent::ResetJump() {
+	if (Character == nullptr)return;
+	if (Character->GetCharacterMovement()) {
+		Character->GetCharacterMovement()->JumpZVelocity = InitialJumpVelocity;
+		
+	}
+	MulticastJumpBuff(InitialJumpVelocity);
+
+
+}
+
+void UBuffComponent::MulticastJumpBuff_Implementation(float JumpVelocity) {
+
+
+	if (Character && Character->GetCharacterMovement()) {
+		Character->GetCharacterMovement()->JumpZVelocity = JumpVelocity;
+
+	}
+
+
+
+}
+
 //_Implementation
 void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CrouchSpeed) {
+	if (Character && Character->GetCharacterMovement()) {
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
 
-	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
-
+	}
+	
 
 
 }

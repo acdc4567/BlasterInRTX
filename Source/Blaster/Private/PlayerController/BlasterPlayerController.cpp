@@ -230,9 +230,11 @@ void ABlasterPlayerController::PollInit() {
 		if (BlasterHUD && BlasterHUD->CharacterOverlay) {
 			CharacterOverlay = BlasterHUD->CharacterOverlay;
 			if (CharacterOverlay) {
-				SetHUDHealth(HUDHealth, HUDMaxHealth);
-				SetHUDScore(HUDScore);
-				SetHUDDefeats(HUDDefeats);
+				if(bInitializeHealth) SetHUDHealth(HUDHealth, HUDMaxHealth);
+				if (bInitializeShield)SetHUDShield(HUDShield, HUDMaxShield);
+
+				if (bInitializeScore)SetHUDScore(HUDScore);
+				if (bInitializeDefeats)SetHUDDefeats(HUDDefeats);
 			
 			}
 		
@@ -333,16 +335,42 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth) {
 
 		const float HealthPercent = Health / MaxHealth;
 		BlasterHUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
-		FString HealthText = FString::Printf(TEXT("%d"), FMath::CeilToInt(Health));
+		FString HealthText = FString::Printf(TEXT("%d / %d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
 		BlasterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 
 	}
 	else {
-		bInitializeCharacterOverlay = 1;
+		bInitializeHealth = 1;
 		HUDHealth = Health;
 		HUDMaxHealth = MaxHealth;
 
 	}
+
+
+
+}
+
+void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield) {
+
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->ShieldBar && BlasterHUD->CharacterOverlay->ShieldText;
+	if (bHUDValid) {
+
+
+		const float ShieldPercent = Shield / MaxShield;
+		BlasterHUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+		FString ShieldText = FString::Printf(TEXT("%d / %d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		BlasterHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+
+	}
+	else {
+		bInitializeShield = 1;
+		HUDShield = Shield;
+		HUDMaxShield = MaxShield;
+
+	}
+
+
 
 
 
@@ -360,7 +388,7 @@ void ABlasterPlayerController::SetHUDScore(float Score) {
 
 	}
 	else {
-		bInitializeCharacterOverlay = 1;
+		bInitializeScore = 1;
 		HUDScore = Score;
 	}
 
@@ -378,7 +406,7 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats) {
 
 	}
 	else {
-		bInitializeCharacterOverlay = 1;
+		bInitializeDefeats = 1;
 		HUDDefeats = Defeats;
 
 	}

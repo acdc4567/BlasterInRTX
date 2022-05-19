@@ -18,10 +18,13 @@ public:
 
 	friend class ABlasterCharacter;
 	void Heal(float HealAmount, float HealingTime);
+	void ReplenishShield(float ShieldAmount, float ReplenishTime);
+
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime);
+	void BuffJump(float BuffJumpVelocity, float BuffTime);
 
 
 
@@ -31,7 +34,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	void HealRampUp(float DeltaTime);
+	void ShieldRampUp(float DeltaTime);
+
 	void SetInitialSpeeds(float BaseSpeed, float CrouchSpeed);
+	void SetInitialJumpVelocity(float BaseVelocity);
 
 private:	
 
@@ -49,6 +55,15 @@ private:
 
 
 	/**
+	* Shield buff
+	*/
+
+	bool bReplenishingShield = false;
+	float ReplenishRate = 0.f;
+	float ShieldReplenishAmount = 0.f;
+
+
+	/**
 	* Speed buff
 	*/
 
@@ -61,6 +76,16 @@ private:
 	UFUNCTION(NetMulticast,Reliable)
 	void MulticastSpeedBuff(float BaseSpeed, float CrouchSpeed);
 
+	/**
+	* Jump buff
+	*/
+	FTimerHandle JumpBuffTimer;
+	void ResetJump();
 
-		
+	float InitialJumpVelocity;
+
+	UFUNCTION(NetMulticast, Reliable)
+		void MulticastJumpBuff(float JumpVelocity);
+
+
 };
