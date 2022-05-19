@@ -49,6 +49,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
+	void UpdateHUDHealth();
+
 
 
 
@@ -93,7 +95,6 @@ protected:
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 
-	void UpdateHUDHealth();
 	
 	//Poll for any relevent Classes and Initialize the HUD
 	void PollInit();
@@ -119,6 +120,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		class UCombatComponent* Combat;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		class UBuffComponent* Buff;
+
 
 	UFUNCTION(Server,Reliable)
 	void ServerEquipButtonPressed();
@@ -251,6 +256,8 @@ public:
 
 	FORCEINLINE float GetHealth() const { return Health; }
 
+	FORCEINLINE void SetHealth(float Amount) { Health = Amount; }
+
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 
 	ECombatState GetCombatState() const;
@@ -259,7 +266,9 @@ public:
 
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 
+	FORCEINLINE UBuffComponent* GetBuff() const { return Buff; }
 
+	
 
 
 
