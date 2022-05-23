@@ -10,7 +10,7 @@ void AShieldPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-
+	
 	if (BlasterCharacter) {
 		UBuffComponent* Buff = BlasterCharacter->GetBuff();
 		if (Buff) {

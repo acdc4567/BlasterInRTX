@@ -37,6 +37,7 @@ public:
 	void PlayReloadMontage();
 
 
+
 	virtual void OnRep_ReplicatedMovement() override;
 	void Elim();
 	UFUNCTION(NetMulticast,Reliable)
@@ -51,8 +52,9 @@ public:
 
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
+	void UpdateHUDAmmo();
 
-
+	void SpawnDefaultWeapon();
 
 
 
@@ -79,6 +81,9 @@ protected:
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void DropOrDestroyWeapon(AWeapon* Weapon);
+	void DropOrDestroyWeapons();
+
 
 
 	UPROPERTY(EditAnywhere, Category = MouseInput)
@@ -101,6 +106,8 @@ protected:
 	void PollInit();
 
 	void RotateInPlace(float DeltaTime);
+
+
 
 
 private:
@@ -239,6 +246,15 @@ private:
 
 	UPROPERTY()
 		class ABlasterPlayerState* BlasterPlayerState;
+
+
+	//DefaultWeapon
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
+
+
+
 
 
 

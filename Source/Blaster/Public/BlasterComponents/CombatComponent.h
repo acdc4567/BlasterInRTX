@@ -25,6 +25,7 @@ public:
 	friend class ABlasterCharacter;
 
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void SwapWeapons();
 
 	void Reload();
 	UFUNCTION(BlueprintCallable)
@@ -39,6 +40,9 @@ public:
 	void PickupAmmo(EWeaponType WeaponType,int32 AmmoAmount);
 
 
+	bool ShowldSwapWeapons();
+
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -51,6 +55,8 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	UFUNCTION()
+		void OnRep_SecondaryWeapon();
 
 	
 	void Fire();
@@ -78,6 +84,16 @@ protected:
 
 	void UpdateCarriedAmmo();
 
+	void DropEquippedWeapon();
+
+	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
+	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
+	void AttachActorToRightHand(AActor* ActorToAttach);
+	void AttachActorToBackpack(AActor* ActorToAttach);
+	void PlayEquipWeaponSound(AWeapon* WeaponToEquip);
+
+
+
 
 
 private:
@@ -93,6 +109,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing=OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
+
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
+		AWeapon* SecondaryWeapon;
 
 	UPROPERTY(Replicated)
 	bool bAiming;

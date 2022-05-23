@@ -52,8 +52,13 @@ private:
 	UPROPERTY(EditAnywhere, Category = VFX)
 		class UNiagaraSystem* PickupEffect;
 
-
-public:	
+	FTimerHandle BindOverlapTimer;
+	float BindOverlapTime = .25f;
+	void BindOverlapTimerFinished();
 	
+
+
+
+
 
 };

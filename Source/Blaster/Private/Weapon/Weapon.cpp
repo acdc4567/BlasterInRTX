@@ -89,6 +89,8 @@ void AWeapon::BeginPlay()
 }
 
 
+
+
 void AWeapon::ShowPickupWidget(bool bShowWidget) {
 
 	if (PickupWidget) {
@@ -250,7 +252,12 @@ void AWeapon::OnRep_Owner() {
 		BlasterOwnerController = nullptr;
 	}
 	else {
-		SetHUDAmmo();
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(Owner) : BlasterOwnerCharacter;
+		if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetEquippedWeapon() && BlasterOwnerCharacter->GetEquippedWeapon() == this) {
+			SetHUDAmmo();
+		}
+
+		
 	}
 	
 }
@@ -265,45 +272,105 @@ void AWeapon::OnRep_Owner() {
 void AWeapon::SetWeaponState(EWeaponState State) {
 
 	WeaponState = State;
+	OnWeaponStateSet();
+
+
+}
+
+void AWeapon::OnWeaponStateSet() {
+
 	switch (WeaponState) {
 	case EWeaponState::EWS_Initial:
 		break;
 	case EWeaponState::EWS_Equipped:
 
-		ShowPickupWidget(0);
+		OnEquipped();
 
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		WeaponMesh->SetSimulatePhysics(0);
-		WeaponMesh->SetEnableGravity(0);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		EnableCustomDepth(0);
+		break;
+	case EWeaponState::EWS_EquippedSecondary:
+
+		OnEquippedSecondary();
+
 		break;
 	case EWeaponState::EWS_Dropped:
 
-
-		if (HasAuthority()) {
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		WeaponMesh->SetSimulatePhysics(1);
-		WeaponMesh->SetEnableGravity(1);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(1);
+		OnDropped();
 
 
 		break;
+
 	case EWeaponState::EWS_MAX:
 		break;
 	default:
 		break;
 	}
-	
+
+
+}
+
+void AWeapon::OnRep_WeaponState() {
+
+	OnWeaponStateSet();
+
+
+}
+
+
+void AWeapon::OnEquipped() {
+
+	ShowPickupWidget(0);
+
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(0);
+	WeaponMesh->SetEnableGravity(0);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	EnableCustomDepth(0);
+
+
+}
+
+
+void AWeapon::OnEquippedSecondary() {
+
+	ShowPickupWidget(0);
+
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponMesh->SetSimulatePhysics(0);
+	WeaponMesh->SetEnableGravity(0);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EnableCustomDepth(1);
+	if (WeaponMesh) {
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
+		WeaponMesh->MarkRenderStateDirty();
+	}
 
 
 
 }
+
+
+void AWeapon::OnDropped() {
+
+	if (HasAuthority()) {
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	WeaponMesh->SetSimulatePhysics(1);
+	WeaponMesh->SetEnableGravity(1);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(1);
+
+
+
+}
+
+
+
+
+
 
 bool AWeapon::IsEmpty() {
 
@@ -311,40 +378,7 @@ bool AWeapon::IsEmpty() {
 }
 
 
-void AWeapon::OnRep_WeaponState() {
 
-	switch (WeaponState) {
-	case EWeaponState::EWS_Initial:
-
-		break;
-	case EWeaponState::EWS_Equipped:
-		ShowPickupWidget(0);
-		WeaponMesh->SetSimulatePhysics(0);
-		WeaponMesh->SetEnableGravity(0);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		EnableCustomDepth(0);
-		break;
-	case EWeaponState::EWS_Dropped:
-
-		WeaponMesh->SetSimulatePhysics(1);
-		WeaponMesh->SetEnableGravity(1);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
-		WeaponMesh->MarkRenderStateDirty();
-		EnableCustomDepth(1);
-
-
-		break;
-	case EWeaponState::EWS_MAX:
-		break;
-	default:
-		break;
-	}
-
-
-
-}
 
 
 
